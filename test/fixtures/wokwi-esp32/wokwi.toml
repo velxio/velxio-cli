@@ -1,0 +1,9 @@
+[wokwi]
+version = 1
+firmware = "build/firmware.bin"
+elf = "build/firmware.elf"
+gdbServerPort = 3333
+
+[[net.forward]]
+from = "localhost:8080"
+to = "target:80"

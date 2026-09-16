@@ -1,0 +1,3 @@
+[test]
+# Tests spin up a fake API with Bun.serve; nothing here needs the network.
+timeout = 20000

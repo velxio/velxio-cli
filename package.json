@@ -1,0 +1,24 @@
+{
+  "name": "velxio-cli",
+  "version": "0.1.0",
+  "description": "Run Velxio simulations from a terminal or a CI job",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "bin": { "velxio-cli": "./src/cli.ts" },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "build": "bun build --compile --target=bun-linux-x64 ./src/cli.ts --outfile dist/velxio-cli",
+    "snapshot": "bun run scripts/update-snapshot.ts"
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "smol-toml": "^1.4.0",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.9.0"
+  }
+}

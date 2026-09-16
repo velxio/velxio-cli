@@ -1,0 +1,12 @@
+name: blink test
+version: 1
+author: Velxio
+steps:
+  - wait-serial: "READY"
+  - delay: 1100ms
+  - expect-pin:
+      part-id: led1
+      pin: A
+      value: 1
+  - write-serial: "hi\n"
+  - wait-serial: "hi"

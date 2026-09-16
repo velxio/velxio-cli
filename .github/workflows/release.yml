@@ -1,0 +1,75 @@
+name: release
+
+# Tag push v* -> one Linux job cross-compiles the five targets with
+# `bun build --compile`, zips them wokwigw-style
+# (velxio-cli_v1.2.3_Linux_64bit.zip ...), writes SHA256SUMS and attaches
+# everything to the GitHub release. install.sh / install.ps1 read exactly
+# these names.
+#
+# Signing (Windows SmartScreen / macOS notarization) is not wired yet.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+      - run: bun install --frozen-lockfile
+      # The board list lint checks against, refreshed from the server so the
+      # binaries carry a fresh snapshot (a stale one lets unknown boards
+      # through to the server). Opt-in through the repository variable until
+      # GET /api/pro/ci/capabilities is live on the release server.
+      - name: Refresh the capabilities snapshot
+        run: |
+          if [ -n "${CAPABILITIES_URL}" ]; then
+            bun run scripts/update-snapshot.ts "${CAPABILITIES_URL}"
+          else
+            echo "::warning::VELXIO_CAPABILITIES_URL is not set; releasing with the committed src/capabilities/snapshot.json"
+          fi
+        env:
+          CAPABILITIES_URL: ${{ vars.VELXIO_CAPABILITIES_URL }}
+      - run: bun run tsc --noEmit
+      - run: bun test
+      - name: Build the five targets
+        run: |
+          VER="${GITHUB_REF_NAME:-dev}"
+          case "$VER" in v*) ;; *) VER="v$VER" ;; esac
+          mkdir -p out
+          build() {
+            target="$1"; label="$2"; exe="$3"
+            bun build --compile --target="$target" \
+              --define "VELXIO_CLI_VERSION=\"${VER#v}\"" \
+              ./src/cli.ts --outfile "build/$label/$exe"
+            (cd "build/$label" && zip -9 "../../out/velxio-cli_${VER}_${label}.zip" "$exe")
+          }
+          build bun-linux-x64     Linux_64bit    velxio-cli
+          build bun-linux-arm64   Linux_ARM64    velxio-cli
+          build bun-darwin-x64    macOS_64bit    velxio-cli
+          build bun-darwin-arm64  macOS_ARM64    velxio-cli
+          build bun-windows-x64   Windows_64bit  velxio-cli.exe
+          (cd out && sha256sum *.zip > SHA256SUMS && cat SHA256SUMS)
+      - name: Smoke the Linux binary
+        run: |
+          ./build/Linux_64bit/velxio-cli version
+          ./build/Linux_64bit/velxio-cli lint test/fixtures/uno-blink
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes || true   # already exists on a re-run / pre-created release
+          gh release upload "$GITHUB_REF_NAME" out/*.zip out/SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --clobber

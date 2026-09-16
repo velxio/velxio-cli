@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "author": "Velxio",
+  "editor": "velxio",
+  "parts": [
+    { "type": "board-pi-pico-w", "id": "pico", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-led", "id": "led1", "top": -40, "left": 200, "attrs": { "color": "red" } }
+  ],
+  "connections": [
+    [ "pico:GP15", "led1:A", "green", [] ],
+    [ "led1:C", "pico:GND.1", "black", [] ]
+  ]
+}

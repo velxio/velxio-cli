@@ -1,0 +1,22 @@
+name: button and sensor
+version: 1
+steps:
+  - wait-serial: "boot ok"
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 50ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - set-control:
+      part-id: dht1
+      control: temperature
+      value: 31.5
+  - wait-serial: "31.5"
+  - expect-pin:
+      part-id: esp
+      pin: "5"
+      expected: high

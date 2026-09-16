@@ -1,0 +1,4 @@
+[velxio]
+version = 1
+board = "pi-pico-w"
+firmware = "build/firmware.uf2"

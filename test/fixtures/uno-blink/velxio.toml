@@ -1,0 +1,6 @@
+[velxio]
+version = 1
+board = "arduino-uno"
+firmware = "build/firmware.hex"
+diagram = "diagram.json"
+scenario = "scenario.yaml"

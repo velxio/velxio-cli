@@ -1,0 +1,15 @@
+{
+  "format": "velxio-project",
+  "version": 1,
+  "exportedAt": "2026-09-16T00:00:00.000Z",
+  "name": "vlx blink",
+  "boards": [
+    { "id": "board-1", "name": "Uno", "boardKind": "arduino-uno", "x": 100, "y": 100, "activeFileGroupId": "group-board-1" }
+  ],
+  "fileGroups": { "group-board-1": [ { "name": "sketch.ino", "content": "void setup(){} void loop(){}" } ] },
+  "components": [
+    { "id": "led-1", "metadataId": "led", "x": 400, "y": 100, "properties": { "color": "red" } }
+  ],
+  "wires": [],
+  "activeBoardId": "board-1"
+}
