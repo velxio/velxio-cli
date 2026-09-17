@@ -4,3 +4,6 @@ out/
 *.log
 .DS_Store
 test/fixtures/**/screenshot.png
+
+# Cross-compile output of the release workflow (one dir per target).
+build/
