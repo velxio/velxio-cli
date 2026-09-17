@@ -21,11 +21,11 @@ wokwi-cli is used; the formats are parsed by our own code.
 The action inputs keep their names (`path`, `timeout`, `expect_text`,
 `fail_text`, `scenario`, `serial_log_file`, `diagram_file`, `elf`). Mint the
 token at https://velxio.dev/account/ci and store it as a repository secret.
-The action arrives in phase 2; until then run the CLI directly:
+Any other CI runs the binary directly:
 
 ```yaml
       - run: curl -fsSL https://velxio.dev/ci/install.sh | sh
-      - run: ~/.velxio/bin/velxio-cli --timeout 10000 --expect-text 'Hello, World!' .
+      - run: ~/.velxio/bin/velxio-cli run --timeout 10000 --expect-text 'Hello, World!' .
         env:
           VELXIO_CLI_TOKEN: ${{ secrets.VELXIO_CLI_TOKEN }}
 ```

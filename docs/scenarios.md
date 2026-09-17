@@ -41,7 +41,7 @@ steps:
 | `write-serial: <string> \| [bytes]` | UTF-8 string or a list of 0..255 | bytes to the primary board's UART |
 | `expect-pin: {part-id, pin, value}` | `value` (or `expected`): `0`/`1`, `high`/`low`, `true`/`false` | read once, immediately; a mismatch ends the run `failed` with the actual level; an unconnected pin is `pin_not_connected` |
 | `set-control: {part-id, control, value}` | number, string or boolean | `pressed` on a button presses/releases; other controls are the part's sensor controls or attributes; unknown controls fail the run listing the known ones |
-| `take-screenshot: {part-id, save-to?, compare-with?, tolerance?}` | at least one of the two paths | PNG of the part; `compare-with` is uploaded and compared in the runner; a mismatch above the tolerance (default `--screenshot-tolerance`, 0.5 %) ends the run `failed` and writes `<name>.diff.png` |
+| `take-screenshot: {part-id, save-to?, compare-with?, tolerance?}` | at least one of the two paths | PNG of the part, written to `save-to`. **`compare-with` is not compared yet**: the runner captures the image and reports one `feature_ignored` warning, so a scenario that relies on it passes on a picture nobody checked. The comparison, its tolerance and the `<name>.diff.png` arrive in a later phase; until then compare the saved PNG in your own job |
 | `touch`, `touch-press`, `touch-move`, `touch-release` | | arrive in phase 3; rejected until then |
 
 Every step may carry a `name:` for readability. Limits: 200 steps, 20
