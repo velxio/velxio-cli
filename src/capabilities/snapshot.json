@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-16T20:39:11Z",
-  "source": "boards.capabilities() of velxio-prod pro/backend/app/pro/ci (P0)",
+  "generated_at": "2026-09-17T03:19:25Z",
+  "source": "https://velxio.dev/api/pro/ci/capabilities",
   "version": 1,
   "protocol": 1,
   "boards": [
