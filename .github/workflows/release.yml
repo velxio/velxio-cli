@@ -51,13 +51,17 @@ jobs:
               --define "VELXIO_CLI_VERSION=\"${VER#v}\"" \
               ./src/cli.ts --outfile "build/$label/$exe"
             (cd "build/$label" && zip -9 "../../out/velxio-cli_${VER}_${label}.zip" "$exe")
+            # The bare binary too: install.sh fetches this one, because a slim
+            # CI image has curl and no unzip. The zip stays for people who
+            # download a release by hand.
+            cp "build/$label/$exe" "out/velxio-cli_${VER}_${label}${exe##velxio-cli}"
           }
           build bun-linux-x64     Linux_64bit    velxio-cli
           build bun-linux-arm64   Linux_ARM64    velxio-cli
           build bun-darwin-x64    macOS_64bit    velxio-cli
           build bun-darwin-arm64  macOS_ARM64    velxio-cli
           build bun-windows-x64   Windows_64bit  velxio-cli.exe
-          (cd out && sha256sum *.zip > SHA256SUMS && cat SHA256SUMS)
+          (cd out && sha256sum velxio-cli_* > SHA256SUMS && cat SHA256SUMS)
       - name: Smoke the Linux binary
         run: |
           ./build/Linux_64bit/velxio-cli version
@@ -71,5 +75,5 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --title "$GITHUB_REF_NAME" \
             --generate-notes || true   # already exists on a re-run / pre-created release
-          gh release upload "$GITHUB_REF_NAME" out/*.zip out/SHA256SUMS \
+          gh release upload "$GITHUB_REF_NAME" out/velxio-cli_* out/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" --clobber

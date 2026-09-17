@@ -4,8 +4,10 @@
 #   curl -fsSL https://velxio.dev/ci/install.sh | sh
 #   VELXIO_CLI_VERSION=v0.1.0 sh install.sh      # pin a version
 #
-# Detects the OS and CPU, downloads velxio-cli_v<ver>_<OS_ARCH>.zip, checks
-# it against the release's SHA256SUMS, unzips it and prints PATH advice.
+# Detects the OS and CPU, downloads the bare binary for it, checks it against
+# the release's SHA256SUMS and prints PATH advice. The release also carries
+# zips of the same binaries; this script does not use them, because a slim CI
+# image usually has curl and no unzip.
 set -eu
 
 REPO="velxio/velxio-cli"
@@ -17,7 +19,6 @@ die() { say "install.sh: $*"; exit 1; }
 
 need() { command -v "$1" >/dev/null 2>&1 || die "needs $1"; }
 need uname
-need unzip
 
 fetch() {
   # fetch <url> <out>
@@ -51,7 +52,7 @@ if [ -z "$VERSION" ]; then
 fi
 case "$VERSION" in v*) ;; *) VERSION="v$VERSION" ;; esac
 
-ASSET="velxio-cli_${VERSION}_${OS}_${ARCH}.zip"
+ASSET="velxio-cli_${VERSION}_${OS}_${ARCH}"
 BASE="https://github.com/$REPO/releases/download/$VERSION"
 
 TMP=$(mktemp -d)
@@ -73,8 +74,7 @@ fi
 [ "$EXPECTED" = "$ACTUAL" ] || die "SHA256 mismatch for $ASSET (expected $EXPECTED, got $ACTUAL)"
 
 mkdir -p "$BIN_DIR"
-unzip -oq "$TMP/$ASSET" -d "$TMP/unpacked"
-install -m 0755 "$TMP/unpacked/velxio-cli" "$BIN_DIR/velxio-cli"
+install -m 0755 "$TMP/$ASSET" "$BIN_DIR/velxio-cli"
 
 say "installed $("$BIN_DIR/velxio-cli" version) to $BIN_DIR/velxio-cli"
 case ":$PATH:" in

@@ -1,11 +1,13 @@
 {
   "name": "velxio-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Run Velxio simulations from a terminal or a CI job",
   "license": "MIT",
   "type": "module",
   "private": true,
-  "bin": { "velxio-cli": "./src/cli.ts" },
+  "bin": {
+    "velxio-cli": "./src/cli.ts"
+  },
   "scripts": {
     "test": "bun test",
     "typecheck": "tsc --noEmit",

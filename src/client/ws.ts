@@ -86,6 +86,8 @@ export function startSession(req: RunRequest, opts: SessionOptions): Session {
   let welcomeTimer: ReturnType<typeof setTimeout> | null = null;
   let cancelTimer: ReturnType<typeof setTimeout> | null = null;
   let runId: string | null = null;
+  // The run.end we reported, kept for the summary file (see writeSummary).
+  let lastEnd: (ServerMessage & { t: 'run.end' }) | null = null;
   let runUrl: string | null = null;
   const shotByName = new Map(req.screenshots.map((s) => [s.name, s]));
 
@@ -103,10 +105,37 @@ export function startSession(req: RunRequest, opts: SessionOptions): Session {
   }
   ws.binaryType = 'arraybuffer';
 
+  /**
+   * $VELXIO_CLI_SUMMARY_FILE: one JSON object about the run, for whoever
+   * called us. The GitHub Action reads it to publish its outputs, which is
+   * why a run that never started still writes the file (with a null run id
+   * and the exit code that says why). Never fatal: a summary that cannot be
+   * written must not change what the run reported.
+   */
+  function writeSummary(code: number): void {
+    const target = process.env.VELXIO_CLI_SUMMARY_FILE;
+    if (!target) return;
+    try {
+      fs.mkdirSync(path.dirname(path.resolve(target)), { recursive: true });
+      fs.writeFileSync(target, JSON.stringify({
+        run_id: runId,
+        run_url: lastEnd?.run_url ?? null,
+        status: lastEnd?.status ?? null,
+        reason: lastEnd?.reason ?? null,
+        sim_time_ms: lastEnd?.sim_ms ?? null,
+        billed_ms: lastEnd?.billed_ms ?? null,
+        exit_code: code,
+      }, null, 2) + '\n');
+    } catch (err) {
+      r.warning({ code: 'summary_file', message: `could not write ${target}: ${(err as Error).message}` }, 'cli');
+    }
+  }
+
   function finish(code: number): void {
     if (finished) return;
     finished = true;
     phase = 'ended';
+    writeSummary(code);
     if (idleTimer) clearTimeout(idleTimer);
     if (welcomeTimer) clearTimeout(welcomeTimer);
     if (cancelTimer) clearTimeout(cancelTimer);
@@ -279,7 +308,9 @@ export function startSession(req: RunRequest, opts: SessionOptions): Session {
         break;
       case 'run.end': {
         const code = exitCodeForEnd(msg, { timeoutExitCode: opts.timeoutExitCode, cancelledByUser });
-        r.end({ ...msg, run_url: absoluteUrl(msg.run_url) }, code);
+        const end = { ...msg, run_url: absoluteUrl(msg.run_url) };
+        lastEnd = end;
+        r.end(end, code);
         finish(code);
         break;
       }
