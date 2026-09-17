@@ -19,9 +19,19 @@ wokwi-cli is used; the formats are parsed by our own code.
 ```
 
 The action inputs keep their names (`path`, `timeout`, `expect_text`,
-`fail_text`, `scenario`, `serial_log_file`, `diagram_file`, `elf`). Mint the
-token at https://velxio.dev/account/ci and store it as a repository secret.
-Any other CI runs the binary directly:
+`fail_text`, `scenario`, `serial_log_file`, `diagram_file`, `elf`). A job
+cannot approve a browser sign-in, so it still carries one secret. Mint it
+from your own machine with
+
+```sh
+velxio-cli login --ci --name acme/blinker
+```
+
+which prints the token once plus the `gh secret set VELXIO_CLI_TOKEN` line
+(the token also appears, revocable, at https://velxio.dev/account/ci). On
+your own machine you never handle a token at all: `velxio-cli login` opens
+the browser and stores what it is given. Any other CI runs the binary
+directly:
 
 ```yaml
       - run: curl -fsSL https://velxio.dev/ci/install.sh | sh

@@ -16,11 +16,15 @@ parsers.
 curl -fsSL https://velxio.dev/ci/install.sh | sh        # Linux, macOS
 irm https://velxio.dev/ci/install.ps1 | iex             # Windows (PowerShell)
 
-export VELXIO_CLI_TOKEN=vlxci_...    # from https://velxio.dev/account/ci
+velxio-cli login                     # opens a browser; you approve, it stores the token
 velxio-cli init --board arduino-uno  # writes velxio.toml + diagram.json
 # build your firmware, point [velxio] firmware at it, then:
 velxio-cli --expect-text "READY" --timeout 5000 .
 ```
+
+You never copy a token for your own machine: `login` asks the server for a
+code, opens the approval page and stores what it is handed. A CI job is the
+one place that still carries a secret; `velxio-cli login --ci` mints it.
 
 A run looks like this:
 
@@ -44,7 +48,8 @@ prints one object per line instead; `-q` keeps only serial and errors.
 | `velxio-cli [run] [dir]` | run the project in `dir` (default `.`) |
 | `velxio-cli lint [dir]` | local checks only: config, circuit, board, scenario, firmware. No network, no token |
 | `velxio-cli init [--board kind]` | write a `velxio.toml` and a `diagram.json` with one board |
-| `velxio-cli login` | store a token in `$XDG_CONFIG_HOME/velxio/credentials` (env and `--token` win) |
+| `velxio-cli login` | sign in through the browser and store the token in `$XDG_CONFIG_HOME/velxio/credentials` (env and `--token` win) |
+| `velxio-cli login --ci --name <repo>` | mint a CI token the same way and print it once, for a repository secret |
 | `velxio-cli whoami` | plan, minutes used and left, limits |
 | `velxio-cli boards` | supported boards, their Wokwi types, firmware formats and status (`--offline` for the built-in list) |
 | `velxio-cli version` | print the version |
@@ -73,6 +78,59 @@ Names match wokwi-cli's so a migrating job changes one line.
 | `--allow-unsupported` | turn degradable `feature_unsupported` rejections into warnings |
 
 Relative paths in flags and in the toml resolve against the project directory.
+
+## Signing in
+
+```sh
+velxio-cli login                      # this machine: browser, approve, stored
+velxio-cli login --ci --name acme/blinker   # a CI secret, printed once
+velxio-cli login --server https://vstaging.moontero.com   # a different server
+```
+
+`login` posts to `/api/pro/ci/auth/device`, prints the user code and the
+approval URL, opens your browser at it and polls
+`/api/pro/ci/auth/token` until you approve (or deny, or the code expires
+after 10 minutes). Ctrl-C cancels and leaves nothing behind. The token it is
+handed is an ordinary `vlxci_` token: it shows up in the list at
+`/account/ci`, and you can revoke it there.
+
+| flag | meaning |
+|---|---|
+| `--ci` | mint the token for a CI job: the CLI PRINTS it (once) instead of storing it, with the `export` line and the GitHub-secret snippet |
+| `--name <name>` | the label the CI token carries, usually the repository (with `--ci`) |
+| `--no-browser` | never launch a browser; print the URL and wait. The approval can happen on any machine |
+| `--token <vlxci_...>` | skip the flow and store a token you already have. With stdin not a terminal, a token piped in is read the same way (`echo $TOK \| velxio-cli login`) |
+| `--server <url>` | which server to sign in to; an explicit `--server` is remembered in the credentials file |
+
+The credentials file is `$XDG_CONFIG_HOME/velxio/credentials`
+(`%APPDATA%\velxio\credentials` on Windows), written 0600 through a fresh
+file and a rename. `VELXIO_CLI_TOKEN` / `VELXIO_CI_TOKEN` and `--token`
+always win over it, so a CI job never reads it.
+
+A machine with no browser and no way to approve anything (an old build box,
+a container) can still be fed a token by hand:
+
+```sh
+velxio-cli login --token vlxci_...          # or: pbpaste | velxio-cli login
+```
+
+### CI
+
+A job cannot open a browser, so it needs one secret. Mint it from any
+machine that can:
+
+```sh
+velxio-cli login --ci --name acme/blinker
+```
+
+It prints the token once, together with
+
+```sh
+gh secret set VELXIO_CLI_TOKEN --body 'vlxci_...'
+```
+
+and the workflow lines that read it. Nothing on the CI runner ever calls
+`login`; the runner just sets `VELXIO_CLI_TOKEN`.
 
 ## Config resolution
 

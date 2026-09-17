@@ -7,11 +7,11 @@ Stable; scripts may rely on them.
 | `0` | passed: `--expect-text` matched, the scenario completed, or (only screenshots requested) the last screenshot was taken |
 | `1` | failed: `--fail-text` seen, `expect-pin` mismatch, a step failed, `compare-with` mismatch, or the guest crashed |
 | `2` | usage, config or lint error, or the server rejected the run before billing (unknown board, unsupported board/part/feature, bad firmware, too large, bad scenario) |
-| `3` | auth: token missing, malformed, unknown, revoked or expired; plan not entitled to CI or subscription period lapsed. When the server refuses the WebSocket upgrade itself (an HTTP error instead of a close code), the CLI asks `GET /api/pro/ci/whoami` with the same token to tell auth (exit 3) from a disabled CI, a rate limit or an unreachable server (exit 5) |
+| `3` | auth: token missing, malformed, unknown, revoked or expired; a `login` denied in the browser (`access_denied`), whose code expired (`expired_token`) or whose account has no CI entitlement (`pro_required`); plan not entitled to CI or subscription period lapsed. When the server refuses the WebSocket upgrade itself (an HTTP error instead of a close code), the CLI asks `GET /api/pro/ci/whoami` with the same token to tell auth (exit 3) from a disabled CI, a rate limit or an unreachable server (exit 5) |
 | `4` | quota: CI minutes exhausted this month (the message carries `resets_at`), or the plan's concurrency limit |
 | `5` | server or runner: rate limited, CI disabled, no runner within 120 s, runner lost, engine stalled, wall-clock cap, renderer crash, network drop. Billed only for the simulated time that elapsed |
 | `--timeout-exit-code` (default `42`) | the simulated-time budget was reached. Use `--timeout-exit-code 0` for "run N seconds and collect serial" |
-| `130` | Ctrl-C: the CLI sends `run.cancel`, waits up to 5 s for the final report, exits. Without a report in time it prints the run id and URL; the server finalises the run |
+| `130` | Ctrl-C: the CLI sends `run.cancel`, waits up to 5 s for the final report, exits. During `login` it stops polling and stores nothing; the pending code is simply left to expire. Without a report in time it prints the run id and URL; the server finalises the run |
 
 ## Server reject codes
 

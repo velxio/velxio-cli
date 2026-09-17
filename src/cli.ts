@@ -109,17 +109,31 @@ common(program.command('init [dir]').description('write velxio.toml and a diagra
     await exitWith(initCommand(dir ?? '.', opts, realOutput));
   });
 
-common(program.command('login').description('store a token in $XDG_CONFIG_HOME/velxio/credentials (env and --token win)')).action(async (opts) => {
-  const readLine = async (): Promise<string | null> => {
-    for await (const chunk of process.stdin) {
-      const text = Buffer.from(chunk as Uint8Array).toString('utf8');
-      const nl = text.indexOf('\n');
-      return nl >= 0 ? text.slice(0, nl) : text;
-    }
-    return null;
-  };
-  await exitWith(await loginCommand(opts, { out: realOutput, readLine }));
-});
+common(program.command('login').description('sign in through the browser and store the token in $XDG_CONFIG_HOME/velxio/credentials (env and --token win)'))
+  .option('--ci', 'mint a token for a CI job and print it instead of storing it')
+  .option('--name <name>', 'label for the CI token, usually the repository (with --ci)')
+  .option('--no-browser', 'never launch a browser; print the URL and wait')
+  .action(async (opts) => {
+    const readLine = async (): Promise<string | null> => {
+      for await (const chunk of process.stdin) {
+        const text = Buffer.from(chunk as Uint8Array).toString('utf8');
+        const nl = text.indexOf('\n');
+        return nl >= 0 ? text.slice(0, nl) : text;
+      }
+      return null;
+    };
+    const controller = new AbortController();
+    const onSigint = () => controller.abort();
+    process.on('SIGINT', onSigint);
+    const code = await loginCommand(opts, {
+      out: realOutput,
+      readLine,
+      stdinIsTTY: !!process.stdin.isTTY,
+      signal: controller.signal,
+    });
+    process.off('SIGINT', onSigint);
+    await exitWith(code);
+  });
 
 common(program.command('whoami').description('plan, minutes used and left, limits')).action(async (opts) => {
   await exitWith(await whoamiCommand(opts, realOutput));

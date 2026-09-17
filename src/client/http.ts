@@ -55,3 +55,56 @@ export async function apiGet(server: string, pathname: string, token: string | n
     throw new CliError(`${server}${pathname} did not return JSON`, { exitCode: EXIT.SERVER, code: 'server' });
   }
 }
+
+export interface ApiReply {
+  status: number;
+  /** Parsed JSON, or null when the body was empty or not JSON. */
+  body: unknown;
+}
+
+/**
+ * Unauthenticated POST used by the device sign-in flow (1.7). It does NOT
+ * map the status to an error: the flow branches on 200/402/403/410/428/429
+ * itself. Only the network and a broken URL throw.
+ */
+export async function apiPost(server: string, pathname: string, payload: unknown, cliVersion: string, signal?: AbortSignal): Promise<ApiReply> {
+  const timeout = AbortSignal.timeout(HTTP_TIMEOUT_MS);
+  const sig = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  let res: Response;
+  try {
+    res = await fetch(`${server}${pathname}`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-Velxio-Cli-Version': cliVersion },
+      body: JSON.stringify(payload),
+      signal: sig,
+    });
+  } catch (err) {
+    if (signal?.aborted) throw new CliError('cancelled', { exitCode: EXIT.INTERRUPT, code: 'interrupted' });
+    throw new CliError(`cannot reach ${server}: ${(err as Error).message}`, {
+      exitCode: EXIT.SERVER,
+      code: 'connect',
+      hints: [`is ${server} reachable? (--server, VELXIO_CLI_SERVER)`],
+    });
+  }
+  let body: unknown = null;
+  try {
+    body = await res.json();
+  } catch {
+    body = null;
+  }
+  return { status: res.status, body };
+}
+
+/** `{error}`, FastAPI's `{detail: {error}}` or `{detail: "..."}`. */
+export function errorCode(body: unknown): string {
+  return errorDetail(body);
+}
+
+/** A number carried either at the top level or inside FastAPI's `detail`. */
+export function errorField(body: unknown, key: string): unknown {
+  const b = (body ?? {}) as Record<string, unknown>;
+  if (b[key] !== undefined) return b[key];
+  const d = b.detail;
+  if (d && typeof d === 'object') return (d as Record<string, unknown>)[key];
+  return undefined;
+}

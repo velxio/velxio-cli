@@ -24,6 +24,15 @@ describe('velxio-cli process', () => {
     expect(help.stdout).toContain('lint [options] [dir]');
   });
 
+  test('login --help offers the browser flow, --ci and the paste path', async () => {
+    const help = await run(['login', '--help']);
+    expect(help.code).toBe(0);
+    for (const flag of ['--ci', '--name <name>', '--no-browser', '--token <token>', '--server <url>']) {
+      expect(help.stdout).toContain(flag);
+    }
+    expect(help.stdout).toContain('sign in through the browser');
+  });
+
   test('lint passes on every fixture project', async () => {
     for (const [dir, board] of [
       ['uno-blink', 'arduino-uno'],
