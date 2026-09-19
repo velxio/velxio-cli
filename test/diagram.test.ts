@@ -53,23 +53,41 @@ describe('diagram.json', () => {
     expect(pico2.exitCode).toBe(2);
     expect(pico2.code).toBe('board_not_supported_in_ci');
     expect(pico2.message).toContain('board-pi-pico-2');
-    // The suggested kind is planned, so it is named with its phase, not offered as a switch.
-    expect(pico2.hints.join(' ')).toContain('xiao-rp2350, is planned for phase-3');
-    expect(pico2.hints.join(' ')).not.toContain('use board-velxio-');
-    // A suggestion this snapshot does not list is not offered at all.
-    const c5 = thrown(() => analyseDiagram(parseDiagram(diagram([{ id: 'b', type: 'board-esp32-c5-devkitc-1' }]))));
-    expect(c5.hints.join(' ')).not.toContain('firebeetle');
+    // Velxio has no Pico 2, but it does have an RP2350 board that runs, so the
+    // hint offers it as something to switch to, spelled the way a diagram
+    // spells a board with no Wokwi type of its own.
+    expect(pico2.hints.join(' ')).toContain('runs today is xiao-rp2350');
+    expect(pico2.hints.join(' ')).toContain('use board-velxio-xiao-rp2350');
     const bluepill = thrown(() => analyseDiagram(parseDiagram(diagram([{ id: 'b', type: 'board-stm32-bluepill' }]))));
     expect(bluepill.code).toBe('board_not_supported_in_ci');
-    expect(bluepill.message).toContain('supported in phase-4');
+    expect(bluepill.message).toContain('planned for phase-4');
   });
 
-  test('a planned board names its Wokwi type and phase (Wokwi default ESP32 template)', () => {
-    const e = thrown(() => analyseDiagram(parseDiagram(diagram([{ id: 'esp', type: 'board-esp32-devkit-c-v4' }]))));
+  test('a board held back by launch control says so, not a phase', () => {
+    // The distinction the message has to carry: the P4 preview devkit is not
+    // waiting on an engine (the P4 engine runs the Function EV today), it is
+    // waiting on a product decision.
+    const e = thrown(() => analyseDiagram(parseDiagram(diagram([{ id: 'esp', type: 'board-esp32-p4-preview' }]))));
     expect(e.code).toBe('board_not_supported_in_ci');
-    expect(e.message).toContain('board-esp32-devkit-c-v4');
-    expect(e.message).toMatch(/supported in phase-\d/);
-    expect(e.hints.join(' ')).toContain('esp32-devkit-c-v4');
+    expect(e.message).toContain('board-esp32-p4-preview');
+    expect(e.message).toContain('waiting on its public launch');
+    expect(e.message).not.toMatch(/phase-\d/);
+    expect(e.hints.join(' ')).toContain('esp32-p4-preview');
+  });
+
+  test('the ESP32 devkits Wokwi templates use all run today', () => {
+    // Every one of these was refused before the board sweep; a regression here
+    // would send a working project back to exit 2.
+    for (const [type, kind] of [
+      ['board-esp32-devkit-c-v4', 'esp32-devkit-c-v4'],
+      ['board-esp32-cam', 'esp32-cam'],
+      ['board-wemos-lolin32-lite', 'wemos-lolin32-lite'],
+      ['board-xiao-esp32-s3', 'xiao-esp32-s3'],
+      ['board-esp32-p4-function-ev', 'esp32-p4'],
+    ] as const) {
+      const a = analyseDiagram(parseDiagram(diagram([{ id: 'b', type }])));
+      expect(a.boards[0]?.kind).toBe(kind);
+    }
   });
 
   test('an unknown board-velxio- kind is an error while the snapshot is fresh', () => {
@@ -123,8 +141,13 @@ describe('.vlx', () => {
   test('unknown board kinds are an error while the snapshot is fresh; planned ones name the phase', () => {
     const one = (boardKind: string) => JSON.stringify({ ...payload, boards: [{ id: 'b', boardKind, x: 0, y: 0, activeFileGroupId: 'g' }], activeBoardId: 'b' });
     expect(thrown(() => analyseVlx(parseVlx(one('not-a-board')))).message).toContain("not in this CLI's board list");
-    const planned = thrown(() => analyseVlx(parseVlx(one('stellar-unicorn'))));
+    const planned = thrown(() => analyseVlx(parseVlx(one('stm32-bluepill'))));
     expect(planned.code).toBe('board_not_supported_in_ci');
-    expect(planned.message).toContain('supported in phase-3');
+    expect(planned.message).toContain('planned for phase-4');
+    const embargoed = thrown(() => analyseVlx(parseVlx(one('dfrobot-beetle-rp2040'))));
+    expect(embargoed.code).toBe('board_not_supported_in_ci');
+    expect(embargoed.message).toContain('waiting on its public launch');
+    // And the RP2350 boards that used to sit here now run.
+    expect(analyseVlx(parseVlx(one('stellar-unicorn'))).boards[0]?.kind).toBe('stellar-unicorn');
   });
 });

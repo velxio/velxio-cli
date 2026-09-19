@@ -1,5 +1,5 @@
 import { configError, type Warning } from '../errors.ts';
-import { boardByKind, isReady, isSnapshotStale, notRunnableHints, type BoardCapability } from '../capabilities/index.ts';
+import { boardByKind, isReady, isSnapshotStale, notRunnableHints, waitingFor, type BoardCapability } from '../capabilities/index.ts';
 
 /**
  * VlxPayload envelope as velxio/frontend/src/utils/vlxFile.ts writes it
@@ -78,7 +78,7 @@ export function analyseVlx(payload: VlxPayload, file = 'project.vlx'): VlxAnalys
       else throw configError(msg, ['run `velxio-cli boards` for the supported kinds', 'or upgrade the CLI'], 'unknown_board_type');
     } else if (!isReady(capability)) {
       throw configError(
-        `${file}: board "${b.id}" (${b.boardKind}) is not available in Velxio CI yet (supported in ${capability.supported_in ?? 'a later phase'})`,
+        `${file}: board "${b.id}" (${b.boardKind}) is not available in Velxio CI yet: ${waitingFor(capability)}`,
         notRunnableHints(capability),
         'board_not_supported_in_ci',
       );

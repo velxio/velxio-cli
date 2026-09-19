@@ -77,25 +77,37 @@ Wokwi element types map 1:1. Board types:
 
 | Wokwi | Velxio kind |
 |---|---|
-| `wokwi-arduino-uno`, `-nano`, `-mega` | `arduino-uno`, `arduino-nano`, `arduino-mega` |
+| `wokwi-arduino-uno` | `arduino-uno` |
+| `wokwi-arduino-nano` | `arduino-nano` |
+| `wokwi-arduino-mega` | `arduino-mega` |
 | `wokwi-attiny85` | `attiny85` |
-| `wokwi-pi-pico`, `board-pi-pico` | `raspberry-pi-pico` |
+| `wokwi-pi-pico`, `board-pi-pico`, `wokwi-raspberry-pi-pico` | `raspberry-pi-pico` |
 | `board-pi-pico-w` | `pi-pico-w` (WiFi has no gateway in CI: warning) |
 | `wokwi-esp32-devkit-v1`, `board-esp32-devkit-v1` | `esp32` |
 | `board-esp32-s3-devkitc-1` | `esp32-s3` |
 | `board-esp32-c3-devkitm-1` | `esp32-c3` |
 | `board-esp32-c6-devkitc-1` | `esp32-c6` |
-| `board-velxio-<kind>` | any Velxio board |
+| `board-esp32-devkit-c-v4` | `esp32-devkit-c-v4` |
+| `board-esp32-cam` | `esp32-cam` |
+| `board-wemos-lolin32-lite` | `wemos-lolin32-lite` |
+| `board-xiao-esp32-s3` | `xiao-esp32-s3` |
+| `board-arduino-nano-esp32` | `arduino-nano-esp32` |
+| `board-xiao-esp32-c3` | `xiao-esp32-c3` |
+| `board-aitewinrobot-esp32c3-supermini` | `aitewinrobot-esp32c3-supermini` |
+| `board-xiao-esp32-c6` | `xiao-esp32c6` |
+| `board-esp32-p4-function-ev` | `esp32-p4` |
+| `board-velxio-<kind>` | any board CI runs, written the Velxio way |
 
-The other ESP32 devkits of Wokwi's templates (`board-esp32-devkit-c-v4`,
-`board-esp32-cam`, `board-wemos-lolin32-lite`, the XIAO ESP32 boards,
-`board-arduino-nano-esp32`, the C3 SuperMini, the P4 boards) are planned:
-lint fails with `board_not_supported_in_ci` naming the type and the phase.
-STM32 boards fail the same way until phase 4. Boards Velxio has no
-simulation for (`board-pi-pico-2`, the Nucleos, ESP32-S2/H2,
-`board-esp32-s3-box`, ...) fail too; a nearby Velxio kind is suggested only
-when it runs today. `velxio-cli boards` prints the live list with each
-board's status.
+Velxio runs thirty-six boards in CI, and most of them -- the RP2350 family,
+the XIAO ARM boards, the M5Stack and Seeed kits -- are boards Wokwi has no
+type for. Write those as `board-velxio-<kind>`.
+
+Boards Velxio has no simulation for (`board-pi-pico-2`, the Nucleos,
+ESP32-S2/H2, `board-esp32-s3-box`, ...) fail lint with
+`board_not_supported_in_ci` naming the type; a nearby Velxio kind is
+suggested only when it runs today. The STM32 boards fail the same way until
+phase 4, and the DFRobot boards and the P4 preview devkit until they launch.
+`velxio-cli boards` prints the live list with each board's status.
 
 ## Scenarios
 

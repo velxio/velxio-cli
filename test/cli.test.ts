@@ -98,7 +98,10 @@ describe('velxio-cli process', () => {
       expect(d.parts[0]?.type).toBe('board-esp32-c3-devkitm-1');
       expect((await run(['init', dir])).code).toBe(2);
       expect((await run(['init', '--board', 'nope', dir])).code).toBe(2);
-      const planned = await run(['init', '--force', '--board', 'esp32-cam', dir]);
+      // A board CI does not run yet is refused here too, so `init` never
+      // writes a project that cannot be run. esp32-cam used to be the case in
+      // point and now runs, so the example is one that is still held back.
+      const planned = await run(['init', '--force', '--board', 'stm32-bluepill', dir]);
       expect(planned.code).toBe(2);
       expect(planned.stderr).toContain('not available in Velxio CI yet');
     } finally {
@@ -111,7 +114,11 @@ describe('velxio-cli process', () => {
     expect(r.code).toBe(0);
     expect(r.stdout).toContain('arduino-uno');
     expect(r.stdout).toContain('board-esp32-s3-devkitc-1');
-    expect(r.stdout).toMatch(/esp32-devkit-c-v4 .* planned \(phase-\d\)/);
+    expect(r.stdout).toMatch(/stm32-bluepill .* planned \(phase-\d\)/);
+    // Launch control is its own status in the listing, not a phase.
+    expect(r.stdout).toMatch(/esp32-p4-preview .* planned \(launch\)/);
+    expect(r.stdout).toMatch(/esp32-devkit-c-v4 .* ready/);
+    expect(r.stdout).toContain('36 of 49 boards ready');
   });
 
   test('whoami against a dead server is exit 5; against nothing is exit 3', async () => {

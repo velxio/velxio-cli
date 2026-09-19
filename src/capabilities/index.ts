@@ -127,17 +127,30 @@ export function resolveWokwiType(type: string): WokwiBoardResolution {
 }
 
 /**
+ * How a board that CI does not run yet describes what it is waiting for.
+ *
+ * `supported_in` is a phase name for the boards whose engine is not wired up
+ * yet, and the literal `launch` for the ones the simulator already runs but
+ * that are still behind Velxio's launch control -- a product decision, not a
+ * missing engine, and worth saying in those words.
+ */
+export function waitingFor(board: BoardCapability): string {
+  if (board.supported_in === 'launch') return 'it is waiting on its public launch';
+  return `it is planned for ${board.supported_in ?? 'a later phase'}`;
+}
+
+/**
  * Hints for a board CI cannot run. A suggested kind is only offered as
  * something to switch to when it is ready; a planned one is named with its
  * phase, and a kind this snapshot does not list is not suggested at all.
  */
 export function notRunnableHints(board: BoardCapability | null, suggest = ''): string[] {
   const hints: string[] = [];
-  if (board) hints.push(`${board.kind} (${board.label}) is planned for ${board.supported_in ?? 'a later phase'}`);
+  if (board) hints.push(`${board.kind} (${board.label}): ${waitingFor(board)}`);
   if (suggest) {
     const s = BY_KIND.get(suggest);
     if (s && isReady(s)) hints.push(`the closest Velxio board that runs today is ${s.kind}: use ${s.wokwi_types[0] ?? VELXIO_BOARD_TYPE_PREFIX + s.kind}`);
-    else if (s) hints.push(`the closest Velxio board, ${s.kind}, is planned for ${s.supported_in ?? 'a later phase'}`);
+    else if (s) hints.push(`the closest Velxio board, ${s.kind}: ${waitingFor(s)}`);
   }
   hints.push('`velxio-cli boards` lists the boards CI runs today');
   return hints;

@@ -1,5 +1,5 @@
 import { configError, type Warning } from '../errors.ts';
-import { isKnownPartType, isReady, isSnapshotStale, LIMITS, notRunnableHints, resolveWokwiType, type BoardCapability } from '../capabilities/index.ts';
+import { isKnownPartType, isReady, isSnapshotStale, LIMITS, notRunnableHints, waitingFor, resolveWokwiType, type BoardCapability } from '../capabilities/index.ts';
 
 /**
  * Wokwi's diagram.json, read as-is. The shape follows
@@ -109,7 +109,7 @@ export function analyseDiagram(diagram: WokwiDiagram, file = 'diagram.json'): Di
         else throw configError(msg, ['run `velxio-cli boards` for the supported kinds', 'or upgrade the CLI'], 'unknown_board_type');
       } else if (!isReady(res.capability)) {
         throw configError(
-          `${file}: board "${p.id}" of type ${p.type} is not available in Velxio CI yet (supported in ${res.capability.supported_in ?? 'a later phase'})`,
+          `${file}: board "${p.id}" of type ${p.type} is not available in Velxio CI yet: ${waitingFor(res.capability)}`,
           notRunnableHints(res.capability),
           'board_not_supported_in_ci',
         );
