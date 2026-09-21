@@ -32,7 +32,7 @@ jobs:
       - name: Refresh the capabilities snapshot
         run: |
           if [ -n "${CAPABILITIES_URL}" ]; then
-            bun run scripts/update-snapshot.ts "${CAPABILITIES_URL}"
+            bun run scripts/update-snapshot.ts "${CAPABILITIES_URL}" --no-regress
           else
             echo "::warning::VELXIO_CAPABILITIES_URL is not set; releasing with the committed src/capabilities/snapshot.json"
           fi

@@ -6,10 +6,18 @@
  * current snapshot (`parts`, the catalogue part ids the endpoint does not
  * list).
  *
- *   bun run scripts/update-snapshot.ts [url-or-file] [--source <label>]
+ *   bun run scripts/update-snapshot.ts [url-or-file] [--source <label>] [--no-regress]
  *
  * Default source: https://velxio.dev/api/pro/ci/capabilities. A file path
  * reads a saved copy of the endpoint's JSON instead.
+ *
+ * --no-regress keeps the committed snapshot when the server would take a
+ * board away from it: one that is `ready` here and missing or not ready
+ * there. The release job refreshes from production, and production can be
+ * behind main -- the v0.2.0 release job did exactly that, replaced a
+ * 36-board snapshot with the 10 production still ran, and failed its own
+ * tests. A server that is merely behind is not news worth shipping; the
+ * committed snapshot was taken from the server that is ahead.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -77,10 +85,29 @@ if (sourceFlag >= 0) {
   label = args[sourceFlag + 1] ?? fail('--source needs a value');
   args.splice(sourceFlag, 2);
 }
+const noRegressFlag = args.indexOf('--no-regress');
+const noRegress = noRegressFlag >= 0;
+if (noRegress) args.splice(noRegressFlag, 1);
 const from = args[0] ?? DEFAULT_URL;
 const doc = await load(from);
 check(doc, from);
 const current = JSON.parse(fs.readFileSync(SNAPSHOT, 'utf8')) as Record<string, unknown>;
+if (noRegress) {
+  type Row = { kind: string; status: string };
+  const readyThere = new Set(
+    (doc.boards as Row[]).filter((b) => b.status === 'ready').map((b) => b.kind),
+  );
+  const lost = ((current.boards as Row[] | undefined) ?? [])
+    .filter((b) => b.status === 'ready' && !readyThere.has(b.kind))
+    .map((b) => b.kind);
+  if (lost.length) {
+    process.stdout.write(
+      `::warning::${label ?? from} is behind the committed snapshot (${lost.length} ready board(s) it does not run: ` +
+        `${lost.slice(0, 5).join(', ')}${lost.length > 5 ? ', ...' : ''}); keeping src/capabilities/snapshot.json\n`,
+    );
+    process.exit(0);
+  }
+}
 const { generated_at: _g, source: _s, parts: _p, ...endpoint } = doc;
 const out = {
   generated_at: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
