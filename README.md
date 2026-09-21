@@ -29,7 +29,7 @@ one place that still carries a secret; `velxio-cli login --ci` mints it.
 A run looks like this:
 
 ```
-velxio-cli 0.1.0 · plan pro · 1838.5 of 2000 min left (resets 2026-10-01)
+velxio-cli 0.2.1 · plan pro · 1838.5 of 2000 min left (resets 2026-10-01)
 project blink (arduino-uno, 3 parts) · firmware build/blink.hex (Intel HEX, 2.1 KB)
 run r_9f3c2a1b7e4d queued (position 0) · budget 5.0 s simulated
 Hello from Velxio
@@ -84,7 +84,7 @@ Relative paths in flags and in the toml resolve against the project directory.
 ```sh
 velxio-cli login                      # this machine: browser, approve, stored
 velxio-cli login --ci --name acme/blinker   # a CI secret, printed once
-velxio-cli login --server https://vstaging.moontero.com   # a different server
+velxio-cli login --server https://velxio.example.com      # a self-hosted server
 ```
 
 `login` posts to `/api/pro/ci/auth/device`, prints the user code and the
@@ -194,7 +194,7 @@ copy of the server's `GET /api/pro/ci/capabilities`:
 
 ```sh
 bun run snapshot                      # from https://velxio.dev
-bun run snapshot https://vstaging.moontero.com/api/pro/ci/capabilities
+bun run snapshot https://velxio.example.com/api/pro/ci/capabilities   # another server
 ```
 
 A board kind the snapshot does not list is an error while the snapshot is
