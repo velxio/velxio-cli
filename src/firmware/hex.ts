@@ -70,6 +70,16 @@ export function validateIntelHex(text: string, file = 'firmware.hex'): HexStats 
       case 0x03:
       case 0x05:
         break;
+      // The micro:bit's Universal Hex, one file for the V1 and the V2 (what
+      // python.microbit.org saves): a section's start and end, its padding and
+      // its data. Which section runs is the board's choice, so they are only
+      // checked here (length, checksum) and go on the wire as they are.
+      case 0x0a:
+      case 0x0b:
+      case 0x0c:
+      case 0x0d:
+      case 0x0e:
+        break;
       default:
         throw configError(`${where}: unknown record type 0x${type.toString(16).padStart(2, '0')}`);
     }

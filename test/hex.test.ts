@@ -29,6 +29,20 @@ describe('Intel HEX', () => {
     expect(validateIntelHex(hexRecord(0, 0, [1]) + '\n').hasEof).toBe(false);
   });
 
+  test('takes a micro:bit Universal Hex, and still checks its records', () => {
+    const text = [
+      hexRecord(4, 0, [0x00, 0x00]),
+      hexRecord(0x0a, 0, [0x99, 0x03, 0xc0, 0xde]), // a V2 section starts
+      hexRecord(0x0d, 0x1000, [1, 2, 3, 4]), // its data
+      hexRecord(0x0c, 0, [0xff, 0xff]), // padding
+      hexRecord(0x0b, 0, [0xff]), // and ends
+      hexRecord(0x0e, 0, [0xff]),
+      ':00000001FF',
+    ].join('\n');
+    expect(validateIntelHex(text).hasEof).toBe(true);
+    expect(() => validateIntelHex(text.replace(/^(:040000...*)(..)$/m, '$100'))).toThrow(/checksum mismatch/);
+  });
+
   test('encodes with type-04 records at 64 KB boundaries and splits across them', () => {
     const hex = encodeIntelHex([{ addr: 0xfff8, data: new Uint8Array(16).fill(0xab) }], 'linear');
     const lines = hex.trim().split('\n');

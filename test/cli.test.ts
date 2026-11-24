@@ -118,7 +118,7 @@ describe('velxio-cli process', () => {
     // Launch control is its own status in the listing, not a phase.
     expect(r.stdout).toMatch(/esp32-p4-preview .* planned \(launch\)/);
     expect(r.stdout).toMatch(/esp32-devkit-c-v4 .* ready/);
-    expect(r.stdout).toContain('36 of 49 boards ready');
+    expect(r.stdout).toContain('45 of 58 boards ready');
   });
 
   test('whoami against a dead server is exit 5; against nothing is exit 3', async () => {

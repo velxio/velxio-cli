@@ -29,7 +29,7 @@ one place that still carries a secret; `velxio-cli login --ci` mints it.
 A run looks like this:
 
 ```
-velxio-cli 0.2.1 · plan pro · 1838.5 of 2000 min left (resets 2026-10-01)
+velxio-cli 0.2.2 · plan pro · 1838.5 of 2000 min left (resets 2026-10-01)
 project blink (arduino-uno, 3 parts) · firmware build/blink.hex (Intel HEX, 2.1 KB)
 run r_9f3c2a1b7e4d queued (position 0) · budget 5.0 s simulated
 Hello from Velxio
